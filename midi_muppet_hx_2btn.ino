@@ -66,9 +66,12 @@
 
 #include <EEPROM.h>
 
-#define BTN_UP 2
-#define BTN_DN 3
-#define LED_GRN 4
+#define BTN_UP 6
+#define BTN_DN 5
+#define BTN_3 4
+#define BTN_4 3
+#define BTN_5 2
+#define LED_GRN 12
 #define LED_RED 5
 
 // Adjust red LED brightness 0-255 (full on was way too bright for me)
@@ -76,9 +79,15 @@
 
 OneButton btnUp(BTN_UP, true);
 OneButton btnDn(BTN_DN, true);
+OneButton btn3(BTN_3, true);
+OneButton btn4(BTN_4, true);
+OneButton btn5(BTN_5, true);
 
 Button jc_btnUp(BTN_UP);
 Button jc_btnDn(BTN_DN);
+Button jc_btn3(BTN_3);
+Button jc_btn4(BTN_4);
+Button jc_btn5(BTN_5);
 
 enum modes_t {SCROLL, SNAPSHOT, FS, LOOPER, TUNER};       // modes of operation
 static modes_t MODE;       // current mode
@@ -110,6 +119,19 @@ void setup() {
   btnDn.setClickTicks(50);
   btnDn.attachClick(dnClick);
   btnDn.attachLongPressStart(dnLongPressStart);
+
+  btn3.setClickTicks(50);
+  btn3.attachClick(threeClick);
+//  btn3.attachLongPressStart(threeLongPressStart);
+
+  btn4.setClickTicks(50);
+  btn4.attachClick(fourClick);
+//  btn3.attachLongPressStart(fourLongPressStart);
+
+  btn5.setClickTicks(50);
+  btn5.attachClick(fiveClick);
+//  btn3.attachLongPressStart(fiveLongPressStart);
+
 
   // Set MIDI baud rate:
   Serial.begin(31250);
@@ -187,6 +209,9 @@ void loop() {
   } else {
     btnUp.tick();                   // both buttons handled by OneButton
     btnDn.tick();
+    btn3.tick();
+    btn4.tick();
+    btn5.tick();
   }
 
   handle_leds();
@@ -269,6 +294,135 @@ void upClick() {
         case OVERDUB:
           LPR_MODE = STOP;
           midiCtrlChange(61, 0); // Looper stop
+          break;
+      }
+      break;
+  }
+}
+
+void threeClick() {
+  switch (MODE)
+  {
+    case SCROLL:
+      patchDown();
+      flashLED(2, LED_RED);
+      break;
+    case TUNER:
+      midiCtrlChange(68, 0); // toggle tuner
+      flashLED(2, LED_RED);
+      MODE = LAST_MODE;
+      break;
+    case SNAPSHOT:
+      midiCtrlChange(69, 9);  // prev snapshot
+      flashLED(2, LED_RED);
+      break;
+    case FS:
+      midiCtrlChange(52, 0); // emulate FS 4
+      flashLED(2, LED_RED);
+      break;
+    case LOOPER:
+      switch (LPR_MODE) {
+        case STOP:
+          LPR_MODE = RECORD;
+          midiCtrlChange(60, 127);  // Looper record
+          break;
+        case RECORD:
+          LPR_MODE = PLAY;
+          midiCtrlChange(61, 127); // Looper play
+          break;
+        case PLAY:
+          LPR_MODE = OVERDUB;
+          midiCtrlChange(60, 0);    // Looper overdub
+          break;
+        case OVERDUB:
+          LPR_MODE = PLAY;
+          midiCtrlChange(61, 127); // Looper play
+          break;
+      }
+      break;
+  }
+}
+
+void fourClick() {
+  switch (MODE)
+  {
+    case SCROLL:
+      patchDown();
+      flashLED(2, LED_RED);
+      break;
+    case TUNER:
+      midiCtrlChange(68, 0); // toggle tuner
+      flashLED(2, LED_RED);
+      MODE = LAST_MODE;
+      break;
+    case SNAPSHOT:
+      midiCtrlChange(69, 9);  // prev snapshot
+      flashLED(2, LED_RED);
+      break;
+    case FS:
+      midiCtrlChange(52, 0); // emulate FS 4
+      flashLED(2, LED_RED);
+      break;
+    case LOOPER:
+      switch (LPR_MODE) {
+        case STOP:
+          LPR_MODE = RECORD;
+          midiCtrlChange(60, 127);  // Looper record
+          break;
+        case RECORD:
+          LPR_MODE = PLAY;
+          midiCtrlChange(61, 127); // Looper play
+          break;
+        case PLAY:
+          LPR_MODE = OVERDUB;
+          midiCtrlChange(60, 0);    // Looper overdub
+          break;
+        case OVERDUB:
+          LPR_MODE = PLAY;
+          midiCtrlChange(61, 127); // Looper play
+          break;
+      }
+      break;
+  }
+}
+
+void fiveClick() {
+  switch (MODE)
+  {
+    case SCROLL:
+      patchDown();
+      flashLED(2, LED_RED);
+      break;
+    case TUNER:
+      midiCtrlChange(68, 0); // toggle tuner
+      flashLED(2, LED_RED);
+      MODE = LAST_MODE;
+      break;
+    case SNAPSHOT:
+      midiCtrlChange(69, 9);  // prev snapshot
+      flashLED(2, LED_RED);
+      break;
+    case FS:
+      midiCtrlChange(52, 0); // emulate FS 4
+      flashLED(2, LED_RED);
+      break;
+    case LOOPER:
+      switch (LPR_MODE) {
+        case STOP:
+          LPR_MODE = RECORD;
+          midiCtrlChange(60, 127);  // Looper record
+          break;
+        case RECORD:
+          LPR_MODE = PLAY;
+          midiCtrlChange(61, 127); // Looper play
+          break;
+        case PLAY:
+          LPR_MODE = OVERDUB;
+          midiCtrlChange(60, 0);    // Looper overdub
+          break;
+        case OVERDUB:
+          LPR_MODE = PLAY;
+          midiCtrlChange(61, 127); // Looper play
           break;
       }
       break;
