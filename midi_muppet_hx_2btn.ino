@@ -92,9 +92,11 @@ OneButton btn7(BTN_7, true);
 OneButton btn8(BTN_8, true);
 OneButton btn9(BTN_9, true);
 OneButton btn10(BTN_10, true);
+//OneButton loop1(BTN_UP, true);
+//OneButton loop2(BTN_DN, true);
 
-Button jc_btnUp(BTN_UP);
-Button jc_btnDn(BTN_DN);
+//Button jc_btnUp(BTN_UP);
+//Button jc_btnDn(BTN_DN);
 
 
 enum modes_t {SCROLL, SNAPSHOT, FS, LOOPER};       // modes of operation
@@ -122,43 +124,39 @@ void setup() {
   // Buttons:
   btnUp.setClickTicks(50);
   btnUp.attachClick(upClick);
-  btnUp.attachLongPressStart(upLongPressStart);
+//  btnUp.attachLongPressStart(upLongPressStart);
 
   btnDn.setClickTicks(50);
   btnDn.attachClick(dnClick);
-  btnDn.attachLongPressStart(dnLongPressStart);
+//  btnDn.attachLongPressStart(dnLongPressStart);
 
   btn3.setClickTicks(50);
   btn3.attachClick(threeClick);
-//  btn3.attachLongPressStart(threeLongPressStart);
 
   btn4.setClickTicks(50);
   btn4.attachClick(fourClick);
-//  btn3.attachLongPressStart(fourLongPressStart);
 
   btn5.setClickTicks(50);
   btn5.attachClick(fiveClick);
-//  btn3.attachLongPressStart(fiveLongPressStart);
 
   btn6.setClickTicks(50);
   btn6.attachClick(sixClick);
-//  btn3.attachLongPressStart(sixLongPressStart);
 
   btn7.setClickTicks(50);
   btn7.attachClick(sevenClick);
-//  btn3.attachLongPressStart(sevenLongPressStart);
+
 
   btn8.setClickTicks(50);
   btn8.attachClick(eightClick);
-//  btn3.attachLongPressStart(eightLongPressStart);
+
 
   btn9.setClickTicks(50);
   btn9.attachClick(nineClick);
-//  btn3.attachLongPressStart(nineLongPressStart);
   
   btn10.setClickTicks(50);
   btn10.attachClick(tenClick);
-//  btn3.attachLongPressStart(tenLongPressStart);
+
+
 
   // Set MIDI baud rate:
   Serial.begin(31250);
@@ -187,8 +185,8 @@ void setup() {
     flashRedGreen(10);
     // we are in looper mode, so we are using the jc_button class for action on button press
     // (OneButton acts on button release)
-    jc_btnUp.begin();
-    jc_btnDn.begin();
+//    jc_btnUp.begin();
+//    jc_btnDn.begin();
   }
   else if (MODE == SCROLL)
     flashLED(10, LED_RED);
@@ -226,14 +224,19 @@ void setup() {
 
 void loop() {
 
-  if (MODE == LOOPER) {
-    jc_btnDn.read();                   // DN Button handled by JC_Button
-    btnUp.tick();                   // Up Button handled by OneButton
-    btn5.tick();
-    if (jc_btnDn.wasPressed() && digitalRead(BTN_UP) == 1)          // attach handler
-      jc_dnClick();
-
-  } else {
+//  if (MODE == LOOPER) {
+////    jc_btnDn.read();                   // DN Button handled by JC_Button
+////    jc_btnUp.read();
+////    btnUp.tick();                   // Up Button handled by OneButton
+////    jc_dnClick();
+////    jc_upClick();
+//    loop1.tick();
+//    loop2.tick();
+//    btn5.tick();
+////    if (jc_btnDn.wasPressed() && digitalRead(BTN_UP) == 1)          // attach handler
+////      jc_dnClick();
+//
+//  } else {
     btnUp.tick();                   // both buttons handled by OneButton
     btnDn.tick();
     btn3.tick();
@@ -244,7 +247,7 @@ void loop() {
     btn8.tick();
     btn9.tick();
     btn10.tick();
-  }
+//  }
 
   handle_leds();
 }
@@ -269,24 +272,24 @@ void dnClick() {
       flashLED(2, LED_RED);
       break;
     case LOOPER:
-      switch (LPR_MODE) {
-        case STOP:
-          LPR_MODE = RECORD;
-          midiCtrlChange(60, 127);  // Looper record
-          break;
-        case RECORD:
-          LPR_MODE = PLAY;
-          midiCtrlChange(61, 127); // Looper play
-          break;
-        case PLAY:
-          LPR_MODE = OVERDUB;
-          midiCtrlChange(60, 0);    // Looper overdub
-          break;
-        case OVERDUB:
-          LPR_MODE = PLAY;
-          midiCtrlChange(61, 127); // Looper play
-          break;
-      }
+//      switch (LPR_MODE) {
+//        case STOP:
+//          LPR_MODE = RECORD;
+//          midiCtrlChange(60, 127);  // Looper record
+//          break;
+//        case RECORD:
+//          LPR_MODE = PLAY;
+//          midiCtrlChange(61, 127); // Looper play
+//          break;
+//        case PLAY:
+//          LPR_MODE = OVERDUB;
+//          midiCtrlChange(60, 0);    // Looper overdub
+//          break;
+//        case OVERDUB:
+//          LPR_MODE = PLAY;
+//          midiCtrlChange(61, 127); // Looper play
+//          break;
+//      }
       break;
   }
 }
@@ -306,76 +309,47 @@ void upClick() {
       midiCtrlChange(53, 0); // emulate FS 5
       break;
     case LOOPER:
-      switch (LPR_MODE) {
-        case STOP:
-          LPR_MODE = PLAY;
-          midiCtrlChange(61, 127); // Looper play
-          break;
-        case PLAY:
-        case RECORD:
-        case OVERDUB:
-          LPR_MODE = STOP;
-          midiCtrlChange(61, 0); // Looper stop
-          break;
-      }
+//      switch (LPR_MODE) {
+//        case STOP:
+//          LPR_MODE = PLAY;
+//          midiCtrlChange(61, 127); // Looper play
+//          break;
+//        case PLAY:
+//        case RECORD:
+//        case OVERDUB:
+//          LPR_MODE = STOP;
+//          midiCtrlChange(61, 0); // Looper stop
+//          break;
+//      }
       break;
   }
 }
 
 void threeClick() {
-  switch (MODE)
-  case LOOPER:
-      switch (LPR_MODE) {
-        case STOP:
-          LPR_MODE = PLAY;
-          midiCtrlChange(61, 127); // Looper play
-          break;
-        case PLAY:
-        case RECORD:
-        case OVERDUB:
-          LPR_MODE = STOP;
-          midiCtrlChange(61, 0); // Looper stop
-          break;
-      }
-}
-
-void fourClick() {
-  switch (MODE)
-  {
-    case SCROLL:
-      patchDown();
-      flashLED(2, LED_RED);
+  switch (LPR_MODE) {
+    case STOP:
+      LPR_MODE = RECORD;
+      midiCtrlChange(60, 127);  // Looper record
       break;
-    case SNAPSHOT:
-      midiCtrlChange(69, 9);  // prev snapshot
-      flashLED(2, LED_RED);
+    case RECORD:
+      LPR_MODE = PLAY;
+      midiCtrlChange(61, 127); // Looper play
       break;
-    case FS:
-      midiCtrlChange(52, 0); // emulate FS 4
-      flashLED(2, LED_RED);
+    case PLAY:
+      LPR_MODE = OVERDUB;
+      midiCtrlChange(60, 0);    // Looper overdub
       break;
-    case LOOPER:
-      switch (LPR_MODE) {
-        case STOP:
-          LPR_MODE = RECORD;
-          midiCtrlChange(60, 127);  // Looper record
-          break;
-        case RECORD:
-          LPR_MODE = PLAY;
-          midiCtrlChange(61, 127); // Looper play
-          break;
-        case PLAY:
-          LPR_MODE = OVERDUB;
-          midiCtrlChange(60, 0);    // Looper overdub
-          break;
-        case OVERDUB:
-          LPR_MODE = PLAY;
-          midiCtrlChange(61, 127); // Looper play
-          break;
-      }
+    case OVERDUB:
+      LPR_MODE = PLAY;
+      midiCtrlChange(61, 127); // Looper play
       break;
   }
 }
+
+void fourClick() {
+  midiCtrlChange(63,127);
+}
+
 
 void fiveClick() {
   switch (MODE)
@@ -389,6 +363,20 @@ void fiveClick() {
       if (with_looper)
        {MODE = LOOPER;
        midiProgChange(106);
+       EEPROM.update(0, MODE);
+    // reset the device to reboot in new mode
+    Reset();
+        switch (LPR_MODE) {
+          case PLAY:
+          case STOP:
+            midiCtrlChange(63, 127); // looper undo/redo
+            flashLED(3, LED_RED);
+            break;
+          case RECORD:
+          case OVERDUB:
+            break;
+        }
+
         }
        else
        {MODE = SNAPSHOT;
@@ -427,47 +415,55 @@ void tenClick() {
   midiCtrlChange(68,0);
 }
 
-void dnLongPressStart() {
-  if (digitalRead(BTN_UP) == 1) {
-    switch (MODE)
-    {
+//
+//void upLongPressStart() {
+//
+//  if (digitalRead(BTN_DN) == 0) {
+//    // yay, both buttons pressed!
+//    // Toggle through modes
+//
+//    EEPROM.update(0, MODE);
+//    // reset the device to reboot in new mode
+//    Reset();
+//        switch (LPR_MODE) {
+//          case PLAY:
+//          case STOP:
+//            midiCtrlChange(63, 127); // looper undo/redo
+//            flashLED(3, LED_RED);
+//            break;
+//          case RECORD:
+//          case OVERDUB:
+//            break;
+//        }
+//
+//    
+//  }
+//}
 
-        break;
-      case SCROLL:
-      case SNAPSHOT:
-      case FS:
-        flashLED(2, LED_RED);
-        LAST_MODE = MODE;
-        break;
-      case LOOPER:
-        break;
+//void loop1Click() {
+//  switch (LPR_MODE) {
+//    case STOP:
+//      LPR_MODE = RECORD;
+//      midiCtrlChange(60, 127);  // Looper record
+//      break;
+//    case RECORD:
+//      LPR_MODE = PLAY;
+//      midiCtrlChange(61, 127); // Looper play
+//      break;
+//    case PLAY:
+//      LPR_MODE = OVERDUB;
+//      midiCtrlChange(60, 0);    // Looper overdub
+//      break;
+//    case OVERDUB:
+//      LPR_MODE = PLAY;
+//      midiCtrlChange(61, 127); // Looper play
+//      break;
+//  }
+//}
 
-    }
-  }
-}
-
-void upLongPressStart() {
-
-  if (digitalRead(BTN_DN) == 0) {
-    // yay, both buttons pressed!
-    // Toggle through modes
-
-    EEPROM.update(0, MODE);
-    // reset the device to reboot in new mode
-    Reset();
-        switch (LPR_MODE) {
-          case PLAY:
-          case STOP:
-            midiCtrlChange(63, 127); // looper undo/redo
-            flashLED(3, LED_RED);
-            break;
-          case RECORD:
-          case OVERDUB:
-            break;
-        }
-
-  }
-}
+//void loop2Click() {
+//  midiCtrlChange(63,127);
+//}
 
 /* ------------------------------------------------- */
 /* ---       JC_Button Callback Routines          ---*/
@@ -497,6 +493,8 @@ void jc_dnClick() {
 void jc_upClick() {
   midiCtrlChange(63,127);
 }
+
+
 
 
 /* ------------------------------------------------- */
