@@ -77,12 +77,15 @@
 #define BTN_9 10
 #define BTN_10 11
 #define LED_GRN 12
-#define LED_BLUE 13
+#define LED_RED 13
 
+// Adjust red LED brightness 0-255 (full on was way too bright for me)
+#define LED_RED_BRIGHTNESS 25
 
 OneButton btn1(BTN_1, true);
 OneButton btn2(BTN_2, true);
 OneButton btn3(BTN_3, true);
+OneButton btn3FS(BTN_3, true);
 OneButton btn4(BTN_4, true);
 OneButton btn5(BTN_5, true);
 OneButton btn6(BTN_6, true);
@@ -90,6 +93,11 @@ OneButton btn7(BTN_7, true);
 OneButton btn8(BTN_8, true);
 OneButton btn9(BTN_9, true);
 OneButton btn10(BTN_10, true);
+//OneButton loop1(BTN_UP, true);
+//OneButton loop2(BTN_DN, true);
+
+//Button jc_btnUp(BTN_UP);
+//Button jc_btnDn(BTN_DN);
 
 
 enum modes_t {SCROLL, SNAPSHOT, FS, LOOPER};       // modes of operation
@@ -111,21 +119,22 @@ void setup() {
   uint8_t looper_val;
 
   // LEDs
-  pinMode(LED_BLUE, OUTPUT);
+  pinMode(LED_RED, OUTPUT);
   pinMode(LED_GRN, OUTPUT);
 
   // Buttons:
 
   btn1.setClickTicks(50);
   btn1.attachClick(oneClick);
-  btn1.attachLongPressStart(oneLongPressStart);
 
   btn2.setClickTicks(50);
   btn2.attachClick(twoClick);
-  btn2.attachLongPressStart(twoLongPressStart);
 
   btn3.setClickTicks(50);
   btn3.attachClick(threeClick);
+
+  btn3FS.setClickTicks(50);
+  btn3FS.attachClick(threeClickFS);
 
   btn4.setClickTicks(50);
   btn4.attachClick(fourClick);
@@ -135,16 +144,13 @@ void setup() {
 
   btn6.setClickTicks(50);
   btn6.attachClick(sixClick);
-  btn6.attachLongPressStart(sixLongPressStart);
 
   btn7.setClickTicks(50);
   btn7.attachClick(sevenClick);
-  btn7.attachLongPressStart(sevenLongPressStart);
 
 
   btn8.setClickTicks(50);
   btn8.attachClick(eightClick);
-
 
 
   btn9.setClickTicks(50);
@@ -169,19 +175,47 @@ void setup() {
     // no valid value in eeprom found. (Maybe this is the first power up ever?)
     MODE = SCROLL;
 
+  // restore mode on HX Stomp as well
+  if (MODE == SNAPSHOT)
+    midiCtrlChange(71, 3); // set snapshot mode
+  else if (MODE == FS)
+    midiCtrlChange(71, 0); // set stomp mode
+  else if (MODE == SCROLL)
+    midiCtrlChange(71, 0); // set stomp mode
+
   // indicate mode via LEDs
   if (MODE == LOOPER) {
     flashRedGreen(10);
+    // we are in looper mode, so we are using the jc_button class for action on button press
+    // (OneButton acts on button release)
+//    jc_btnUp.begin();
+//    jc_btnDn.begin();
   }
   else if (MODE == SCROLL)
-    flashLED(10, LED_BLUE);
+    flashLED(10, LED_RED);
   else if (MODE == FS)
     flashLED(10, LED_GRN);
 
   // Looper default state
   LPR_MODE = STOP;
 
-
+  // check if btd_dn or btn_up is still pressed on power on
+  // and enable disable looper mode availability
+  // (buttons are low active)
+   if(digitalRead(BTN_2) == 0 && digitalRead(BTN_1) == 1){
+      // btn dn pressed
+      with_looper = false;
+      EEPROM.update(1, with_looper);
+      delay(500);
+      flashLED(5, LED_RED);
+  }
+   if(digitalRead(BTN_2) == 1 && digitalRead(BTN_1) == 0){
+      // btn up pressed
+      with_looper = true;
+      EEPROM.update(1, with_looper);
+      delay(500);
+      flashLED(5, LED_GRN);
+  }
 
   // restore looper config from adr. 1
   looper_val = EEPROM.read(1);
@@ -192,16 +226,46 @@ void setup() {
 }
 
 void loop() {
-  btn1.tick();                   // both buttons handled by OneButton
-  btn2.tick();
-  btn3.tick();
-  btn4.tick();
-  btn5.tick();
-  btn6.tick();
-  btn7.tick();
-  btn8.tick();
-  btn9.tick();
-  btn10.tick();
+
+//  if (MODE == LOOPER) {
+////    jc_btnDn.read();                   // DN Button handled by JC_Button
+////    jc_btnUp.read();
+////    btnUp.tick();                   // Up Button handled by OneButton
+////    jc_dnClick();
+////    jc_upClick();
+//    loop1.tick();
+//    loop2.tick();
+//    btn5.tick();
+////    if (jc_btnDn.wasPressed() && digitalRead(BTN_UP) == 1)          // attach handler
+////      jc_dnClick();
+//
+//  } else {
+
+  if (MODE == FS) {
+    btn1.tick();                   // both buttons handled by OneButton
+    btn2.tick();
+    btn3FS.tick();
+    btn4.tick();
+    btn5.tick();
+    btn6.tick();
+    btn7.tick();
+    btn8.tick();
+    btn9.tick();
+    btn10.tick();
+  }
+  else {
+    btn1.tick();                   // both buttons handled by OneButton
+    btn2.tick();
+    btn3.tick();
+    btn4.tick();
+    btn5.tick();
+    btn6.tick();
+    btn7.tick();
+    btn8.tick();
+    btn9.tick();
+    btn10.tick();
+  }
+
   handle_leds();
 }
 
@@ -210,22 +274,41 @@ void loop() {
 /* ------------------------------------------------- */
 
 void oneClick() {
-      patchDown();
-      flashLED(2, LED_BLUE);
-}
-
-void oneLongPressStart() {
-      midiCtrlChange(70, 0); // Bypass On
+  switch (MODE)
+  {
+    case SCROLL:
+      patchUp();
+      flashLED(2, LED_RED);
+      break;
+    case SNAPSHOT:
+      flashLED(2, LED_RED);
+      midiCtrlChange(69, 8);  // next snapshot
+      break;
+    case FS:
+      flashLED(2, LED_RED);
+      midiCtrlChange(52, 0); // emulate FS 5
+      break;
+  }
 }
 
 void twoClick() {
-      patchUp();
-      flashLED(2, LED_BLUE);
+  switch (MODE)
+  {
+    case SCROLL:
+      patchDown();
+      flashLED(2, LED_RED);
+      break;
+    case SNAPSHOT:
+      midiCtrlChange(69, 9);  // prev snapshot
+      flashLED(2, LED_RED);
+      break;
+    case FS:
+      midiCtrlChange(53, 0); // emulate FS 4
+      flashLED(2, LED_RED);
+      break;
+  }
 }
 
-void twoLongPressStart() {
-      midiCtrlChange(70, 127); // Bypass Off
-}
 
 
 void threeClick() {
@@ -249,14 +332,16 @@ void threeClick() {
   }
 }
 
+void threeClickFS() {
+  midiCtrlChange(52, 0); // emulate FS 4
+}
 
 void fourClick() {
   midiCtrlChange(63,127);
 }
 
-
 void fiveClick() {
-  midiCtrlChange(61,0); //stop looper
+  midiCtrlChange(69,2);
 }
 
 
@@ -265,35 +350,22 @@ void sixClick() {
   midiCtrlChange(69,0);
 }
 
-void sixLongPressStart() {
-    midiCtrlChange(52, 0); // FS 4
-}
-
-
 void sevenClick() {
   midiCtrlChange(69,1);
 }
-
-void sevenLongPressStart() {
-  midiCtrlChange(53, 0); // FS 5
-}
-
 
 void eightClick() {
   midiCtrlChange(69,2);
 }
 
+
 void nineClick() {
-  midiCtrlChange(68,0);
-}
-
-
-void tenClick() {
   switch (MODE)
   {
     
     case SCROLL:
       MODE = FS;
+      midiCtrlChange(71, 0); // set stomp mode
       break;
     case FS:
       if (with_looper)
@@ -304,7 +376,8 @@ void tenClick() {
         switch (LPR_MODE) {
           case PLAY:
           case STOP:
-            flashLED(3, LED_BLUE);
+            midiCtrlChange(63, 127); // looper undo/redo
+            flashLED(3, LED_RED);
             break;
           case RECORD:
           case OVERDUB:
@@ -314,18 +387,57 @@ void tenClick() {
         }
        else
        {MODE = SCROLL;
+       midiCtrlChange(71, 0); // set snapshot mode
        }
       break;
     case LOOPER:
       // make sure to switch off looper
-//      midiCtrlChange(61, 0); // Looper stop
+      midiCtrlChange(61, 0); // Looper stop
       MODE = SCROLL;
+      midiCtrlChange(71, 0); // set stomp mode
+//      break;
+//    case SNAPSHOT:
+//       MODE = SCROLL;
+//       midiCtrlChange(71, 0); // set stomp mode
   }
+}
+
+
+void tenClick() {
+  midiCtrlChange(68,0);
 }
 
 
 
 
+///* ------------------------------------------------- */
+///* ---       JC_Button Callback Routines          ---*/
+///* ------------------------------------------------- */
+//
+//void jc_dnClick() {
+//  switch (LPR_MODE) {
+//    case STOP:
+//      LPR_MODE = RECORD;
+//      midiCtrlChange(60, 127);  // Looper record
+//      break;
+//    case RECORD:
+//      LPR_MODE = PLAY;
+//      midiCtrlChange(61, 127); // Looper play
+//      break;
+//    case PLAY:
+//      LPR_MODE = OVERDUB;
+//      midiCtrlChange(60, 0);    // Looper overdub
+//      break;
+//    case OVERDUB:
+//      LPR_MODE = PLAY;
+//      midiCtrlChange(61, 127); // Looper play
+//      break;
+//  }
+//}
+//
+//void jc_upClick() {
+//  midiCtrlChange(63,127);
+//}
 
 
 
@@ -381,19 +493,19 @@ void flashLED(uint8_t i, uint8_t led)
 void flashRedGreen(uint8_t i) {
   uint8_t last_state_r;
   uint8_t last_state_g;
-  last_state_r = digitalRead(LED_BLUE);
+  last_state_r = digitalRead(LED_RED);
   last_state_g = digitalRead(LED_GRN);
 
 
   for (uint8_t j = 0; j < i; j++) {
-    digitalWrite(LED_BLUE, LOW);
+    digitalWrite(LED_RED, LOW);
     digitalWrite(LED_GRN, HIGH);
     delay(75);
-    analogWrite(LED_BLUE, HIGH);
+    analogWrite(LED_RED, LED_RED_BRIGHTNESS);
     digitalWrite(LED_GRN, LOW);
     delay(75);
   }
-  digitalWrite(LED_BLUE, last_state_r);
+  digitalWrite(LED_RED, last_state_r);
   digitalWrite(LED_GRN, last_state_g);
 }
 
@@ -404,17 +516,17 @@ void handle_leds() {
     case SCROLL:
       // solid red
       digitalWrite(LED_GRN, LOW);
-      analogWrite(LED_BLUE, HIGH);
-      //digitalWrite(LED_BLUE, HIGH);
+      analogWrite(LED_RED, LED_RED_BRIGHTNESS);
+      //digitalWrite(LED_RED, HIGH);
       break;
     case SNAPSHOT:
       // solid green
       digitalWrite(LED_GRN, HIGH);
-      digitalWrite(LED_BLUE, LOW);
+      digitalWrite(LED_RED, LOW);
       break;
     case FS:
       // solid green
-      digitalWrite(LED_BLUE, LOW);
+      digitalWrite(LED_RED, LOW);
       digitalWrite(LED_GRN, HIGH);
       break;
 
@@ -422,20 +534,20 @@ void handle_leds() {
       switch (LPR_MODE) {
         case STOP:
           digitalWrite(LED_GRN, LOW);
-          digitalWrite(LED_BLUE, LOW);
+          digitalWrite(LED_RED, LOW);
           break;
         case PLAY:
           digitalWrite(LED_GRN, HIGH);
-          digitalWrite(LED_BLUE, LOW);
+          digitalWrite(LED_RED, LOW);
           break;
         case RECORD:
           digitalWrite(LED_GRN, LOW);
-          analogWrite(LED_BLUE, HIGH);
+          analogWrite(LED_RED, LED_RED_BRIGHTNESS);
           break;
         case OVERDUB:
           // yellow
           digitalWrite(LED_GRN, HIGH);
-          analogWrite(LED_BLUE, HIGH);
+          analogWrite(LED_RED, LED_RED_BRIGHTNESS);
           break;
       }
       break;
