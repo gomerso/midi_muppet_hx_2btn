@@ -92,7 +92,7 @@ OneButton btn9(BTN_9, true);
 OneButton btn10(BTN_10, true);
 
 
-enum modes_t {SCROLL, SNAPSHOT, FS, LOOPER};       // modes of operation
+enum modes_t {LOOPER};       // modes of operation
 static modes_t MODE;       // current mode
 static modes_t LAST_MODE;  // last mode
 
@@ -145,10 +145,9 @@ void setup() {
   btn8.setClickTicks(50);
   btn8.attachClick(eightClick);
 
-
-
   btn9.setClickTicks(50);
   btn9.attachClick(nineClick);
+  btn9.attachLongPressStart(nineLongPressStart);
   
   btn10.setClickTicks(50);
   btn10.attachClick(tenClick);
@@ -159,36 +158,9 @@ void setup() {
   Serial.begin(31250);
 
       
-  // get last used mode from eeprom adr. 0
-  eeprom_val = EEPROM.read(0);
-
-  // restore last mode, if possible (= valid value)
-  if (eeprom_val < 4)
-    MODE = (modes_t)eeprom_val;
-  else
-    // no valid value in eeprom found. (Maybe this is the first power up ever?)
-    MODE = SCROLL;
-
-  // indicate mode via LEDs
-  if (MODE == LOOPER) {
-    flashRedGreen(10);
-  }
-  else if (MODE == SCROLL)
-    flashLED(10, LED_BLUE);
-  else if (MODE == FS)
-    flashLED(10, LED_GRN);
-
   // Looper default state
   LPR_MODE = STOP;
 
-
-
-  // restore looper config from adr. 1
-  looper_val = EEPROM.read(1);
-  if (looper_val < 2)
-      with_looper = looper_val;
-   else
-      with_looper = true;
 }
 
 void loop() {
@@ -202,7 +174,7 @@ void loop() {
   btn8.tick();
   btn9.tick();
   btn10.tick();
-  handle_leds();
+//  handle_leds();
 }
 
 /* ------------------------------------------------- */
@@ -228,7 +200,19 @@ void twoLongPressStart() {
 }
 
 
+
 void threeClick() {
+  midiCtrlChange(1,0); // emulate EXP 1 low
+}
+void threeLongPressStart() {
+  midiCtrlChange(1, 127); // emulate EXP 1  High
+}
+
+void fiveClick() {
+  midiCtrlChange(63,127); //looper undo
+}
+
+void fourClick() {
   switch (LPR_MODE) {
     case STOP:
       LPR_MODE = RECORD;
@@ -250,19 +234,9 @@ void threeClick() {
 }
 
 
-void fourClick() {
-  midiCtrlChange(63,127);
-}
-
-
-void fiveClick() {
-  midiCtrlChange(61,0); //stop looper
-}
-
-
 
 void sixClick() {
-  midiCtrlChange(69,0);
+  midiCtrlChange(69,0); // snapshot 1
 }
 
 void sixLongPressStart() {
@@ -271,7 +245,7 @@ void sixLongPressStart() {
 
 
 void sevenClick() {
-  midiCtrlChange(69,1);
+  midiCtrlChange(69,1); //snapshot 2
 }
 
 void sevenLongPressStart() {
@@ -280,47 +254,19 @@ void sevenLongPressStart() {
 
 
 void eightClick() {
-  midiCtrlChange(69,2);
+  midiCtrlChange(69,2); // snapshot 3
 }
 
 void nineClick() {
-  midiCtrlChange(68,0);
+  midiCtrlChange(61,127); // play looper
 }
 
+void nineLongPressStart() {
+  midiCtrlChange(62, 127); // play once
+}
 
 void tenClick() {
-  switch (MODE)
-  {
-    
-    case SCROLL:
-      MODE = FS;
-      break;
-    case FS:
-      if (with_looper)
-       {MODE = LOOPER;
-       EEPROM.update(0, MODE);
-    // reset the device to reboot in new mode
-    Reset();
-        switch (LPR_MODE) {
-          case PLAY:
-          case STOP:
-            flashLED(3, LED_BLUE);
-            break;
-          case RECORD:
-          case OVERDUB:
-            break;
-        }
-
-        }
-       else
-       {MODE = SCROLL;
-       }
-      break;
-    case LOOPER:
-      // make sure to switch off looper
-//      midiCtrlChange(61, 0); // Looper stop
-      MODE = SCROLL;
-  }
+  midiCtrlChange(61,0); //stop looper
 }
 
 
@@ -397,47 +343,47 @@ void flashRedGreen(uint8_t i) {
   digitalWrite(LED_GRN, last_state_g);
 }
 
-void handle_leds() {
-  static unsigned long next = millis();
-
-  switch (MODE) {
-    case SCROLL:
-      // solid red
-      digitalWrite(LED_GRN, LOW);
-      analogWrite(LED_BLUE, HIGH);
-      //digitalWrite(LED_BLUE, HIGH);
-      break;
-    case SNAPSHOT:
-      // solid green
-      digitalWrite(LED_GRN, HIGH);
-      digitalWrite(LED_BLUE, LOW);
-      break;
-    case FS:
-      // solid green
-      digitalWrite(LED_BLUE, LOW);
-      digitalWrite(LED_GRN, HIGH);
-      break;
-
-    case LOOPER:
-      switch (LPR_MODE) {
-        case STOP:
-          digitalWrite(LED_GRN, LOW);
-          digitalWrite(LED_BLUE, LOW);
-          break;
-        case PLAY:
-          digitalWrite(LED_GRN, HIGH);
-          digitalWrite(LED_BLUE, LOW);
-          break;
-        case RECORD:
-          digitalWrite(LED_GRN, LOW);
-          analogWrite(LED_BLUE, HIGH);
-          break;
-        case OVERDUB:
-          // yellow
-          digitalWrite(LED_GRN, HIGH);
-          analogWrite(LED_BLUE, HIGH);
-          break;
-      }
-      break;
-  }
-}
+//void handle_leds() {
+//  static unsigned long next = millis();
+//
+//  switch (MODE) {
+//    case SCROLL:
+//      // solid red
+//      digitalWrite(LED_GRN, LOW);
+//      analogWrite(LED_BLUE, HIGH);
+//      //digitalWrite(LED_BLUE, HIGH);
+//      break;
+//    case SNAPSHOT:
+//      // solid green
+//      digitalWrite(LED_GRN, HIGH);
+//      digitalWrite(LED_BLUE, LOW);
+//      break;
+//    case FS:
+//      // solid green
+//      digitalWrite(LED_BLUE, LOW);
+//      digitalWrite(LED_GRN, HIGH);
+//      break;
+//
+//    case LOOPER:
+//      switch (LPR_MODE) {
+//        case STOP:
+//          digitalWrite(LED_GRN, LOW);
+//          digitalWrite(LED_BLUE, LOW);
+//          break;
+//        case PLAY:
+//          digitalWrite(LED_GRN, HIGH);
+//          digitalWrite(LED_BLUE, LOW);
+//          break;
+//        case RECORD:
+//          digitalWrite(LED_GRN, LOW);
+//          analogWrite(LED_BLUE, HIGH);
+//          break;
+//        case OVERDUB:
+//          // yellow
+//          digitalWrite(LED_GRN, HIGH);
+//          analogWrite(LED_BLUE, HIGH);
+//          break;
+//      }
+//      break;
+//  }
+//}
